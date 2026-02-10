@@ -8,3 +8,8 @@
 *.settings
 UserSettings/Search.settings
 UserSettings/Layouts/default-6000.dwlt
+*.settings
+*.dwlt
+*.log
+*.log
+*.log
