@@ -23,20 +23,33 @@ namespace WorldTime
             }
 
             _worldTime.WorldTimeChanged += OnWorldTimeChanged;
+            _worldTime.WorldDayChanged += OnWorldDayChanged; // NEW
 
-            // Optional: show initial time immediately
-            _text.SetText(_worldTime.CurrentTime.ToString(@"hh\:mm"));
+            RefreshText();
         }
 
         private void OnDestroy()
         {
-            if (_worldTime != null)
-                _worldTime.WorldTimeChanged -= OnWorldTimeChanged;
+            if (_worldTime == null) return;
+
+            _worldTime.WorldTimeChanged -= OnWorldTimeChanged;
+            _worldTime.WorldDayChanged -= OnWorldDayChanged; // NEW
         }
 
         private void OnWorldTimeChanged(object sender, TimeSpan newTime)
         {
-            _text.SetText(newTime.ToString(@"hh\:mm"));
+            RefreshText();
+        }
+
+        private void OnWorldDayChanged(int newDay)
+        {
+            RefreshText();
+        }
+
+        private void RefreshText()
+        {
+            // Example: "Day 3  06:15"
+            _text.SetText($"Day {_worldTime.CurrentDay}  {_worldTime.CurrentTime:hh\\:mm}");
         }
     }
 }

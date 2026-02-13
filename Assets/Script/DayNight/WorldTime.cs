@@ -5,37 +5,51 @@ namespace WorldTime
 {
     public class WorldTime : MonoBehaviour
     {
-        // Keep this so other scripts referencing CurrentTime won't break
         public TimeSpan CurrentTime { get; private set; }
 
-        // Keep your event so existing subscribers still work
+        // NEW: day counter (Day 1 = start day)
+        public int CurrentDay { get; private set; } = 1;
+
         public event EventHandler<TimeSpan> WorldTimeChanged;
+
+        // NEW: day change event (optional but useful)
+        public event Action<int> WorldDayChanged; // newDay
 
         [Header("Start Time")]
         [SerializeField] private int startHour = 6;
         [SerializeField] private int startMinute = 0;
 
+        [Header("Start Day")]
+        [SerializeField] private int startDay = 1;
+
         private void Awake()
         {
-            // Set initial time to 06:00
+            CurrentDay = Mathf.Max(1, startDay);
             CurrentTime = new TimeSpan(startHour, startMinute, 0);
 
-            // Optional: notify listeners immediately so UI/light updates at start
+            WorldDayChanged?.Invoke(CurrentDay);
             WorldTimeChanged?.Invoke(this, CurrentTime);
         }
-
-        // IMPORTANT: No Update() time ticking anymore.
-        // If you currently have Update() adding time, remove/disable it.
 
         public void AdvanceMinutes(int minutes)
         {
             if (minutes <= 0) return;
 
-            CurrentTime = CurrentTime.Add(TimeSpan.FromMinutes(minutes));
+            int oldDay = CurrentDay;
 
-            // If you want to wrap after 24h:
-            if (CurrentTime.TotalMinutes >= 1440)
-                CurrentTime = TimeSpan.FromMinutes(CurrentTime.TotalMinutes % 1440);
+            double totalMinutes = CurrentTime.TotalMinutes + minutes;
+
+            if (totalMinutes >= 1440)
+            {
+                int dayAdd = (int)(totalMinutes / 1440);
+                CurrentDay += dayAdd;
+                totalMinutes = totalMinutes % 1440;
+            }
+
+            CurrentTime = TimeSpan.FromMinutes(totalMinutes);
+
+            if (CurrentDay != oldDay)
+                WorldDayChanged?.Invoke(CurrentDay);
 
             WorldTimeChanged?.Invoke(this, CurrentTime);
         }
