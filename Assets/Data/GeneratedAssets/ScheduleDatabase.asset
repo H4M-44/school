@@ -1,0 +1,51 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: aae806dc2b13f584fa44243104e55c21, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  days:
+  - id: 1001
+    dayNumber: 1
+    blocks:
+    - time: 31/12/1899 10:00
+      name: "\u65E9\u4E0A"
+      npcLocationId: 0
+      startDialogueId: 0
+      endDialogueId: 0
+    - time: 31/12/1899 15:15
+      name: 
+      npcLocationId: 0
+      startDialogueId: 0
+      endDialogueId: 0
+    - time: 31/12/1899 20:15
+      name: 
+      npcLocationId: 0
+      startDialogueId: 0
+      endDialogueId: 0
+  - id: 1002
+    dayNumber: 2
+    blocks:
+    - time: 31/12/1899 10:00
+      name: "\u65E9\u4E0A"
+      npcLocationId: 0
+      startDialogueId: 0
+      endDialogueId: 0
+    - time: 31/12/1899 16:15
+      name: 
+      npcLocationId: 0
+      startDialogueId: 0
+      endDialogueId: 0
+    - time: 31/12/1899 21:15
+      name: 
+      npcLocationId: 0
+      startDialogueId: 0
+      endDialogueId: 0
