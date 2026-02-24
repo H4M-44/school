@@ -16,36 +16,36 @@ MonoBehaviour:
   - id: 1001
     dayNumber: 1
     blocks:
-    - time: 31/12/1899 10:00
+    - time: 10:00
       name: "\u65E9\u4E0A"
-      npcLocationId: 0
+      npcLocationId: 20001
       startDialogueId: 0
       endDialogueId: 0
-    - time: 31/12/1899 15:15
-      name: 
-      npcLocationId: 0
+    - time: 15:15
+      name: "\u65E9\u4E0A"
+      npcLocationId: 20001
       startDialogueId: 0
       endDialogueId: 0
-    - time: 31/12/1899 20:15
-      name: 
-      npcLocationId: 0
+    - time: 20:15
+      name: "\u65E9\u4E0A"
+      npcLocationId: 20001
       startDialogueId: 0
       endDialogueId: 0
   - id: 1002
     dayNumber: 2
     blocks:
-    - time: 31/12/1899 10:00
+    - time: 10:00
       name: "\u65E9\u4E0A"
-      npcLocationId: 0
+      npcLocationId: 20002
       startDialogueId: 0
       endDialogueId: 0
-    - time: 31/12/1899 16:15
-      name: 
-      npcLocationId: 0
+    - time: 16:15
+      name: "\u65E9\u4E0A"
+      npcLocationId: 20002
       startDialogueId: 0
       endDialogueId: 0
-    - time: 31/12/1899 21:15
-      name: 
-      npcLocationId: 0
+    - time: 21:15
+      name: "\u65E9\u4E0A"
+      npcLocationId: 20002
       startDialogueId: 0
       endDialogueId: 0

@@ -15,4 +15,25 @@ MonoBehaviour:
   sets:
   - id: 20001
     note: 
-    slotEvents: []
+    placements:
+    - npcId: NPC_01
+      anchorId: A
+      eventId: 0
+    - npcId: NPC_02
+      anchorId: B
+      eventId: 0
+    - npcId: NPC_03
+      anchorId: C
+      eventId: 0
+  - id: 20002
+    note: 
+    placements:
+    - npcId: NPC_01
+      anchorId: B
+      eventId: 0
+    - npcId: NPC_02
+      anchorId: C
+      eventId: 0
+    - npcId: NPC_03
+      anchorId: A
+      eventId: 0

@@ -5,7 +5,6 @@ using System.Data;
 using System.Globalization;
 using System.IO;
 using System.Linq;
-using System.Text;
 using ExcelDataReader;
 using UnityEditor;
 using UnityEngine;
@@ -48,6 +47,9 @@ public static class DailySystemExcelImporter
         if (npcTable == null) Debug.LogError($"Cannot find npc-location sheet. Existing: {ListSheets(ds)}");
         if (dialogueTable == null) Debug.LogError($"Cannot find dialogue sheet. Existing: {ListSheets(ds)}");
 
+        // 找不到就别硬跑，避免空引用/生成空资产误导你
+        if (scheduleTable == null || npcTable == null || dialogueTable == null) return;
+
         // Parse + Save
         var scheduleDb = ParseSchedule(scheduleTable);
         SaveOrOverwrite(scheduleDb, "ScheduleDatabase.asset");
@@ -81,7 +83,6 @@ public static class DailySystemExcelImporter
 
         var headerMap = BuildHeaderMap(t, headerRow);
 
-        // Mandatory
         int colId = FindCol(headerMap, "ID");
         int colDay = FindCol(headerMap, "天数");
 
@@ -91,11 +92,7 @@ public static class DailySystemExcelImporter
             return db;
         }
 
-        // Time blocks A~Z (we'll dynamically find all '时间段X')
-        var blockKeys = FindTimeBlockKeys(headerMap.Keys); // returns list like A,B,C...
-        // For each key, we try to find:
-        // 时间段A, 名字, NPC位置ID, 起始剧情ID, 结束剧情ID (your sheet uses these exact headers)
-        // Note: sometimes columns might be named like "NPC位置ID" or "npc位置ID" etc. We'll use contains matching.
+        var blockKeys = FindTimeBlockKeys(headerMap.Keys);
 
         for (int r = headerRow + 1; r < t.Rows.Count; r++)
         {
@@ -122,7 +119,7 @@ public static class DailySystemExcelImporter
                 if (string.IsNullOrWhiteSpace(time)) continue;
 
                 int colName = FindCol(headerMap, $"名字{key}");
-                if (colName < 0) colName = FindCol(headerMap, "名字"); // fallback if not suffixed
+                if (colName < 0) colName = FindCol(headerMap, "名字");
 
                 int colNpc =
                     FindColContains(headerMap, $"NPC位置ID{key}") ??
@@ -144,7 +141,6 @@ public static class DailySystemExcelImporter
                     FindColContains(headerMap, "结束剧情") ??
                     -1;
 
-
                 var block = new TimeBlock
                 {
                     time = time,
@@ -157,16 +153,13 @@ public static class DailySystemExcelImporter
                 day.blocks.Add(block);
             }
 
-            // Sort blocks by time (HH:mm)
             day.blocks.Sort((a, b) => ParseMinutes(a.time).CompareTo(ParseMinutes(b.time)));
-
             db.days.Add(day);
         }
 
         return db;
     }
 
-    // Try to detect keys A,B,C... by scanning headers that start with "时间段"
     private static List<string> FindTimeBlockKeys(IEnumerable<string> headers)
     {
         var keys = new HashSet<string>();
@@ -175,100 +168,62 @@ public static class DailySystemExcelImporter
             var s = NormalizeHeader(h);
             if (!s.StartsWith("时间段")) continue;
 
-            // "时间段A" -> key = "A"
             var key = s.Substring("时间段".Length).Trim();
             if (string.IsNullOrWhiteSpace(key)) continue;
             keys.Add(key);
         }
 
-        // If none found, fallback to A~F
         if (keys.Count == 0)
             return new List<string> { "A", "B", "C", "D", "E", "F" };
 
-        // Stable ordering: A,B,C... then others
         return keys.OrderBy(k => k, StringComparer.Ordinal).ToList();
     }
 
     // =========================
     // Parse: NPC位置
     // =========================
-    private static NpcLocationDatabase ParseNpcLocation(DataTable t)
+    private static NpcLocationDatabase ParseNpcLocation(DataTable table)
     {
         var db = ScriptableObject.CreateInstance<NpcLocationDatabase>();
-        if (t == null) return db;
+        if (table == null) return db;
 
-        int headerRow = DetectHeaderRow(t, requiredKeywords: new[] { "ID" });
-        if (headerRow < 0)
+        // 你的表：第0行是表头
+        int headerRow = 0;
+
+        for (int r = headerRow + 1; r < table.Rows.Count; r++)
         {
-            Debug.LogError("NPC位置: cannot detect header row.");
-            return db;
-        }
-
-        var headerMap = BuildHeaderMap(t, headerRow);
-        int colId = FindCol(headerMap, "ID");
-        int colNote = FindCol(headerMap, "备注");
-
-        if (colId < 0)
-        {
-            Debug.LogError("NPC位置: missing ID column.");
-            return db;
-        }
-
-        // Your NPC位置 header is like:
-        // ID, 备注, A, 事件ID, B, 事件ID, C, 事件ID...
-        // We'll parse pairs by scanning columns after ID/备注:
-        // a "slot" column then next "eventId" column (header contains 事件ID)
-        var colCount = t.Columns.Count;
-
-        for (int r = headerRow + 1; r < t.Rows.Count; r++)
-        {
-            var row = t.Rows[r];
+            var row = table.Rows[r];
             if (IsRowEmpty(row)) continue;
 
-            int id = ToInt(row, colId);
+            int id = ToInt(row, 0); // ID
             if (id == 0) continue;
 
             var set = new NpcLocationSet
             {
                 id = id,
-                note = colNote >= 0 ? ToCellString(row, colNote) : "",
-                slotEvents = new List<NpcSlotEvent>()
+                note = ToCellString(row, 1), // 备注
+                placements = new List<NpcPlacement>()
             };
 
-            // Start scanning from the first column after "备注" if it exists, else after ID
-            int startCol = (colNote >= 0 ? Math.Max(colNote + 1, colId + 1) : colId + 1);
-
-            for (int c = startCol; c < colCount - 1; c++)
+            // 从第2列开始：NPC_01, 事件ID, NPC_02, 事件ID...
+            for (int c = 2; c < table.Columns.Count; c += 2)
             {
-                string header = GetHeaderByCol(headerMap, c);
+                // header gives npcId like "NPC_01"
+                string npcId = table.Rows[headerRow][c]?.ToString().Trim();
+                if (string.IsNullOrWhiteSpace(npcId)) continue;
 
-                // Detect slot columns: header is "A"/"B"/"C" OR contains "槽位" etc.
-                // In your sheet, header itself might be "A", and the next header is "事件ID".
-                string slotHeader = NormalizeHeader(header);
-                if (string.IsNullOrWhiteSpace(slotHeader)) continue;
+                string anchorId = ToCellString(row, c); // A/B/C...
+                int eventId = (c + 1 < table.Columns.Count) ? ToInt(row, c + 1) : 0;
 
-                // If next column header contains "事件ID", treat current as slot
-                string nextHeader = GetHeaderByCol(headerMap, c + 1);
-                if (!NormalizeHeader(nextHeader).Contains("事件id") && !NormalizeHeader(nextHeader).Contains("事件ID".ToLower()))
-                    continue;
+                // anchorId 为空：该 NPC 这一套不出现
+                if (string.IsNullOrWhiteSpace(anchorId)) continue;
 
-                string slotValue = ToCellString(row, c); // usually "A"/"B"/...
-                if (string.IsNullOrWhiteSpace(slotValue))
+                set.placements.Add(new NpcPlacement
                 {
-                    // If the cell is empty, you may still want slot from header (A/B/C). We'll fallback.
-                    slotValue = slotHeader;
-                }
-
-                int eventId = ToInt(row, c + 1);
-
-                // Allow empty eventId (0), still store slot so you can debug
-                set.slotEvents.Add(new NpcSlotEvent
-                {
-                    slot = slotValue.Trim(),
+                    npcId = npcId,
+                    anchorId = anchorId.Trim(),
                     eventId = eventId
                 });
-
-                c++; // skip eventId column
             }
 
             db.sets.Add(set);
@@ -337,14 +292,12 @@ public static class DailySystemExcelImporter
     {
         if (ds == null) return null;
 
-        // Exact match first
         foreach (var name in candidates)
         {
             foreach (DataTable t in ds.Tables)
                 if (t.TableName == name) return t;
         }
 
-        // Contains match fallback (case-insensitive)
         foreach (var name in candidates)
         {
             var n = name.ToLowerInvariant();
@@ -382,17 +335,14 @@ public static class DailySystemExcelImporter
         }
     }
 
-    // Detect which row is header by checking if it contains required keywords across columns
     private static int DetectHeaderRow(DataTable t, string[] requiredKeywords)
     {
-        // scan first 10 rows (enough for your use)
         int maxScan = Math.Min(10, t.Rows.Count);
         for (int r = 0; r < maxScan; r++)
         {
             var row = t.Rows[r];
             if (IsRowEmpty(row)) continue;
 
-            // build row strings
             var cells = new List<string>();
             for (int c = 0; c < t.Columns.Count; c++)
                 cells.Add(NormalizeHeader(CellRawToString(row[c])));
@@ -407,6 +357,7 @@ public static class DailySystemExcelImporter
                     break;
                 }
             }
+
             if (ok) return r;
         }
         return -1;
@@ -423,11 +374,10 @@ public static class DailySystemExcelImporter
             var key = NormalizeHeader(raw);
 
             if (string.IsNullOrWhiteSpace(key)) continue;
-
-            // If duplicates, keep the first
             if (!map.ContainsKey(key))
                 map[key] = c;
         }
+
         return map;
     }
 
@@ -443,17 +393,8 @@ public static class DailySystemExcelImporter
         if (headerMap == null) return null;
         var key = NormalizeHeader(containsName);
         foreach (var kv in headerMap)
-        {
             if (kv.Key.Contains(key)) return kv.Value;
-        }
         return null;
-    }
-
-    private static string GetHeaderByCol(Dictionary<string, int> headerMap, int col)
-    {
-        foreach (var kv in headerMap)
-            if (kv.Value == col) return kv.Key;
-        return "";
     }
 
     private static bool IsRowEmpty(DataRow row)
@@ -471,28 +412,23 @@ public static class DailySystemExcelImporter
     private static string ToCellString(DataRow row, int col)
     {
         if (col < 0 || col >= row.Table.Columns.Count) return "";
-        var v = row[col];
-        return CellToString(v);
+        return CellToString(row[col]);
     }
 
     private static string CellToString(object v)
     {
         if (v == null || v == DBNull.Value) return "";
 
-        // Excel time/date often becomes DateTime
         if (v is DateTime dt)
             return dt.ToString("HH:mm");
 
-        // Sometimes time is double (fraction of day)
         if (v is double d)
         {
-            // If it looks like a time fraction (0..1), format to HH:mm
             if (d >= 0 && d < 1.5)
             {
                 var ts = TimeSpan.FromDays(d);
                 return $"{ts.Hours:D2}:{ts.Minutes:D2}";
             }
-            // Otherwise keep numeric
             return d.ToString(CultureInfo.InvariantCulture);
         }
 
@@ -526,14 +462,11 @@ public static class DailySystemExcelImporter
     private static string NormalizeTime(string raw)
     {
         if (string.IsNullOrWhiteSpace(raw)) return "";
-
         raw = raw.Trim();
 
-        // "10.15" -> "10:15"
         if (raw.Contains("."))
             raw = raw.Replace('.', ':');
 
-        // "10:00:00" -> "10:00"
         var parts = raw.Split(':');
         if (parts.Length >= 2)
         {
@@ -541,7 +474,6 @@ public static class DailySystemExcelImporter
                 return $"{h:D2}:{m:D2}";
         }
 
-        // If it's already "HH:mm" return raw (best effort)
         return raw;
     }
 
@@ -560,7 +492,7 @@ public static class DailySystemExcelImporter
         if (string.IsNullOrWhiteSpace(s)) return "";
         s = s.Trim();
         s = s.Replace(" ", "");
-        s = s.Replace("\u3000", ""); // full-width space
+        s = s.Replace("\u3000", "");
         return s.ToLowerInvariant();
     }
 }

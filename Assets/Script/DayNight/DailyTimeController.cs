@@ -4,9 +4,26 @@ using UnityEngine;
 public class DailyTimeController : MonoBehaviour
 {
     [SerializeField] private WorldTime.WorldTime worldTime;
+    [SerializeField] private NpcDirector npcDirector;
 
     [SerializeField] private int currentDay = 1;
     [SerializeField] private int currentBlockIndex = -1;
+
+    private void Awake()
+    {
+        // 兜底：避免你忘了拖引用导致 null
+        if (npcDirector == null)
+            npcDirector = FindFirstObjectByType<NpcDirector>();
+
+        if (worldTime == null)
+            worldTime = FindFirstObjectByType<WorldTime.WorldTime>();
+
+        if (npcDirector == null)
+            Debug.LogError("NpcDirector not found in scene! Make sure it exists and is enabled.");
+
+        if (worldTime == null)
+            Debug.LogError("WorldTime not found in scene! Make sure it exists and is enabled.");
+    }
 
     public void NextTime()
     {
@@ -39,10 +56,19 @@ public class DailyTimeController : MonoBehaviour
     {
         Debug.Log($"[Day {currentDay}] Enter {block.time} ({block.name}) npcLoc={block.npcLocationId} startDia={block.startDialogueId}");
 
-        // IMPORTANT: apply to in-game clock
+        // 1) 时钟跳转
         if (worldTime != null)
             worldTime.SetTimeHHmm(currentDay, block.time);
         else
             Debug.LogError("WorldTime reference not assigned!");
+
+        // 2) NPC 跳转（你缺的就是这一段）
+        if (block.npcLocationId != 0)
+        {
+            if (npcDirector != null)
+                npcDirector.ApplyNpcLocation(block.npcLocationId);
+            else
+                Debug.LogError("NpcDirector reference not assigned!");
+        }
     }
 }

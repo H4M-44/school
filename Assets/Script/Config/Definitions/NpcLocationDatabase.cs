@@ -11,14 +11,15 @@ public class NpcLocationDatabase : ScriptableObject
 [Serializable]
 public class NpcLocationSet
 {
-    public int id; // 20001
-    public string note;
-    public List<NpcSlotEvent> slotEvents = new(); // A~E
+    public int id;       // 20001
+    public string note;  // 备注
+    public List<NpcPlacement> placements = new(); // <-- 用这个，不用 SlotEvents
 }
 
 [Serializable]
-public class NpcSlotEvent
+public class NpcPlacement
 {
-    public string slot;   // "A" "B" "C" "D" "E"
-    public int eventId;   // you can use dialogueId as MVP
+    public string npcId;     // "NPC_01"
+    public string anchorId;  // "A" / "B" / "C"
+    public int eventId;      // optional
 }

@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   lines:
   - dialogueId: 900001
-    time: 31/12/1899 10:00
+    time: 10:00
     speaker: "\u4E3B\u89D2"
     text: "\u4F60\u597D"
   - dialogueId: 900001
