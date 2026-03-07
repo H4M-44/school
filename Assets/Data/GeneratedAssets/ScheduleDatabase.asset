@@ -19,18 +19,18 @@ MonoBehaviour:
     - time: 10:00
       name: "\u65E9\u4E0A"
       npcLocationId: 20001
-      startDialogueId: 0
-      endDialogueId: 0
+      startDialogueId: 900001
+      endDialogueId: 900003
     - time: 15:15
       name: "\u65E9\u4E0A"
       npcLocationId: 20001
-      startDialogueId: 0
-      endDialogueId: 0
+      startDialogueId: 900001
+      endDialogueId: 900003
     - time: 20:15
       name: "\u65E9\u4E0A"
       npcLocationId: 20001
-      startDialogueId: 0
-      endDialogueId: 0
+      startDialogueId: 900001
+      endDialogueId: 900003
   - id: 1002
     dayNumber: 2
     blocks:
