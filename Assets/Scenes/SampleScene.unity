@@ -2480,7 +2480,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.05, y: 0.05}
   m_AnchorMax: {x: 0.95, y: 0.3}
-  m_AnchoredPosition: {x: 0, y: 0}
+  m_AnchoredPosition: {x: 0, y: 77}
   m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &550407492
@@ -2984,6 +2984,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   worldTime: {fileID: 1275594350}
   npcDirector: {fileID: 1273495204}
+  dialogueUIController: {fileID: 0}
   currentDay: 1
   currentBlockIndex: -1
 --- !u!4 &676048672
