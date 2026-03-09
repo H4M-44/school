@@ -41,11 +41,11 @@ public class PlayerMovement : MonoBehaviour
         // 镜像角色
         if (moveHorizontal < 0) // 向左移动
         {
-            transform.localScale = new Vector3(-10f, 10f, 10f); // 镜像角色
+            transform.localScale = new Vector3(-8f, 8f, 8f); // 镜像角色
         }
         else if (moveHorizontal > 0) // 向右移动
         {
-            transform.localScale = new Vector3(10f, 10f, 10f); // 恢复正常方向
+            transform.localScale = new Vector3(8f, 8f, 8f); // 恢复正常方向
         }
 
         // 每帧都确保旋转被锁定

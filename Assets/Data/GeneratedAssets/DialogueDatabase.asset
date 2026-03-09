@@ -10,18 +10,22 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 09224c79c5e95234486dfccdc06b9d27, type: 3}
-  m_Name: DialogueDatabase
+  m_Name: 
   m_EditorClassIdentifier: 
   lines:
   - dialogueId: 900001
     time: 
-    speaker: A
-    text: HU
+    speaker: "\u4E3B\u89D2"
+    text: "\u4F60\u597D"
   - dialogueId: 900002
     time: 
-    speaker: V
-    text: BYRE
+    speaker: "\u5973\u4E3BA"
+    text: "\u62DC\u62DC"
   - dialogueId: 900003
     time: 
-    speaker: A
+    speaker: "\u4E3B\u89D2"
     text: 11
+  - dialogueId: 900004
+    time: 
+    speaker: "\u5973\u4E3BB"
+    text: 22
