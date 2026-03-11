@@ -2683,7 +2683,7 @@ GameObject:
   - component: {fileID: 464183083}
   - component: {fileID: 464183082}
   m_Layer: 0
-  m_Name: Env_CommercialBuilding_01 (1)
+  m_Name: "\u5546\u5E97B"
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -3136,7 +3136,8 @@ Transform:
   m_LocalPosition: {x: -32.9, y: 1.37, z: 26.3}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
-  m_Children: []
+  m_Children:
+  - {fileID: 953753964}
   m_Father: {fileID: 1504765930}
   m_LocalEulerAnglesHint: {x: 0, y: -180, z: 0}
 --- !u!64 &615960593
@@ -4311,6 +4312,59 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 860608698}
   m_Mesh: {fileID: 4300000, guid: 1c936144256334970bc901f9aeba9727, type: 3}
+--- !u!1 &953753963
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 953753964}
+  - component: {fileID: 953753965}
+  m_Layer: 11
+  m_Name: GameObject
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &953753964
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 953753963}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 7.69}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 615960592}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!65 &953753965
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 953753963}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 5.1988773, y: 2.5786428, z: 1.5940361}
+  m_Center: {x: 0.07337093, y: 0.7893214, z: -0.29701805}
 --- !u!1 &1013413995
 GameObject:
   m_ObjectHideFlags: 0
@@ -4695,7 +4749,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!114 &1089162310
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -4947,7 +5001,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!114 &1273495204
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -5398,7 +5452,7 @@ GameObject:
   - component: {fileID: 1465544064}
   - component: {fileID: 1465544063}
   m_Layer: 0
-  m_Name: Env_CommercialBuilding_01 (3)
+  m_Name: "\u5546\u5E97D"
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -5693,7 +5747,7 @@ GameObject:
   - component: {fileID: 1593198626}
   - component: {fileID: 1593198625}
   m_Layer: 0
-  m_Name: Env_CommercialBuilding_01
+  m_Name: "\u5546\u5E97A"
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -7324,7 +7378,7 @@ GameObject:
   - component: {fileID: 1966062472}
   - component: {fileID: 1966062471}
   m_Layer: 0
-  m_Name: Env_CommercialBuilding_01 (2)
+  m_Name: "\u5546\u5E97C"
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -7996,7 +8050,7 @@ GameObject:
   - component: {fileID: 2117559778}
   - component: {fileID: 2117559777}
   m_Layer: 0
-  m_Name: Env_CommercialBuilding_01 (4)
+  m_Name: "\u5546\u5E97E"
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -16845,7 +16899,7 @@ GameObject:
   - component: {fileID: 5520053799547619847}
   - component: {fileID: 5520053799549915746}
   m_Layer: 11
-  m_Name: Gate_China (1)
+  m_Name: "\u64CD\u573A\u5165\u53E3"
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -16958,7 +17012,7 @@ GameObject:
   - component: {fileID: 5520053800620301109}
   - component: {fileID: 5520053800622588752}
   m_Layer: 11
-  m_Name: Gate_China (2)
+  m_Name: "\u516C\u56ED\u5165\u53E3"
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
