@@ -2,90 +2,95 @@ using UnityEngine;
 
 public class PlayerMovement : MonoBehaviour
 {
-    public float moveSpeed = 5f; // ÒÆ¶¯ËÙ¶È
-    private Animator animator; // Animator×é¼ş
-    private Rigidbody rb; // Rigidbody×é¼ş£¨¿ÉÑ¡£¬Èç¹ûÓĞµÄ»°£©
+    public float moveSpeed = 5f;
+
+    [Header("References")]
+    [SerializeField] private Animator animator;
+    [SerializeField] private Rigidbody rb;
+    [SerializeField] private Transform visualRoot;   // æ‹–ä½ çš„ character è¿›æ¥
 
     void Start()
     {
-        animator = GetComponent<Animator>(); // »ñÈ¡Animator×é¼ş
+        if (animator == null && visualRoot != null)
+        {
+            animator = visualRoot.GetComponent<Animator>();
+        }
 
-        // ¼ì²éÊÇ·ñÓĞRigidbody£¬Èç¹ûÓĞ¾ÍËø¶¨Ğı×ª
-        rb = GetComponent<Rigidbody>();
+        if (rb == null)
+        {
+            rb = GetComponent<Rigidbody>();
+        }
+
         if (rb != null)
         {
-            // Ëø¶¨RigidbodyµÄĞı×ª
             rb.freezeRotation = true;
             rb.constraints = RigidbodyConstraints.FreezeRotationX |
-                            RigidbodyConstraints.FreezeRotationY |
-                            RigidbodyConstraints.FreezeRotationZ;
+                             RigidbodyConstraints.FreezeRotationY |
+                             RigidbodyConstraints.FreezeRotationZ;
+        }
+
+        if (visualRoot == null)
+        {
+            Debug.LogError("PlayerMovement: visualRoot is not assigned.");
         }
     }
 
     void Update()
     {
-        // »ñÈ¡ÊäÈë
-        float moveHorizontal = Input.GetAxis("Horizontal"); // AºÍD¼ü»ò×ó/ÓÒ¼ıÍ·
-        float moveVertical = Input.GetAxis("Vertical"); // WºÍS¼ü»òÉÏ/ÏÂ¼ıÍ·£¨Èç¹ûĞèÒª£©
+        float moveHorizontal = Input.GetAxis("Horizontal");
+        float moveVertical = Input.GetAxis("Vertical");
 
-        // ´´½¨ÒÆ¶¯ÏòÁ¿£¬²»¿¼ÂÇÒÆ¶¯·½ÏòÊ±µÄĞı×ª
         Vector3 movement = new Vector3(moveHorizontal, 0.0f, moveVertical).normalized;
 
-        // ÒÆ¶¯½ÇÉ«
         MoveCharacter(movement);
 
-        // ¸üĞÂ¶¯»­²ÎÊı
-        animator.SetFloat("MoveX", movement.x); // ÉèÖÃË®Æ½ÒÆ¶¯²ÎÊı
-        animator.SetFloat("MoveZ", movement.z); // ÉèÖÃ´¹Ö±ÒÆ¶¯²ÎÊı
-
-        // ¾µÏñ½ÇÉ«
-        if (moveHorizontal < 0) // Ïò×óÒÆ¶¯
+        if (animator != null)
         {
-            transform.localScale = new Vector3(-8f, 8f, 8f); // ¾µÏñ½ÇÉ«
-        }
-        else if (moveHorizontal > 0) // ÏòÓÒÒÆ¶¯
-        {
-            transform.localScale = new Vector3(8f, 8f, 8f); // »Ö¸´Õı³£·½Ïò
+            animator.SetFloat("MoveX", movement.x);
+            animator.SetFloat("MoveZ", movement.z);
         }
 
-        // Ã¿Ö¡¶¼È·±£Ğı×ª±»Ëø¶¨
+        // åªç¿» visualRootï¼Œä¸ç¿»æ•´ä¸ªç©å®¶æ ¹ç‰©ä½“
+        if (visualRoot != null)
+        {
+            Vector3 scale = visualRoot.localScale;
+
+            if (moveHorizontal < 0)
+            {
+                scale.x = -Mathf.Abs(scale.x);
+            }
+            else if (moveHorizontal > 0)
+            {
+                scale.x = Mathf.Abs(scale.x);
+            }
+
+            visualRoot.localScale = scale;
+        }
+
         LockRotation();
     }
 
     void MoveCharacter(Vector3 direction)
     {
-        // Ê¹ÓÃTransform½øĞĞÒÆ¶¯
         transform.position += direction * moveSpeed * Time.deltaTime;
-
-        // ²»½¨ÒéÊ¹ÓÃLookRotation£¬Õâ»áµ¼ÖÂ½ÇÉ«Ğı×ª
-        // ±£³Ö½ÇÉ«µÄYÖáĞı×ªÎª¹Ì¶¨Öµ£¨Í¨³£ÊÇ0£©
     }
 
-    // Ëø¶¨Ğı×ªµÄ·½·¨
     void LockRotation()
     {
-        // ·½·¨1£ºÖ±½ÓÉèÖÃĞı×ªÎª¹Ì¶¨Öµ
         transform.rotation = Quaternion.Euler(0, 0, 0);
-
-        // ·½·¨2£ºÖ»Ëø¶¨XºÍZÖá£¬ÔÊĞíYÖáĞı×ª£¨Èç¹ûĞèÒªÃæÏòÒÆ¶¯·½ÏòµÄ»°£©
-        // transform.rotation = Quaternion.Euler(0, transform.rotation.eulerAngles.y, 0);
     }
 
-    // Èç¹ûÊ¹ÓÃÎïÀíÏµÍ³£¬¿ÉÒÔÌí¼ÓÕâĞ©·½·¨
     void FixedUpdate()
     {
         if (rb != null)
         {
-            // È·±£ÎïÀí¸üĞÂÊ±Ğı×ªÒ²±»Ëø¶¨
             rb.angularVelocity = Vector3.zero;
             rb.rotation = Quaternion.identity;
         }
     }
 
-    // ¿ÉÑ¡£º·ÀÖ¹ÓëÆäËûÎïÌåÅö×²Ê±Ğı×ª
     void OnCollisionEnter(Collision collision)
     {
-        // Åö×²Ê±Á¢¼´ÖØÖÃĞı×ª
         transform.rotation = Quaternion.identity;
 
         if (rb != null)
@@ -94,10 +99,8 @@ public class PlayerMovement : MonoBehaviour
         }
     }
 
-    // ¿ÉÑ¡£º·ÀÖ¹ÓëÆäËûÎïÌå³ÖĞøÅö×²Ê±Ğı×ª
     void OnCollisionStay(Collision collision)
     {
-        // ³ÖĞøÅö×²Ê±Ò²±£³ÖĞı×ªËø¶¨
         LockRotation();
     }
 }

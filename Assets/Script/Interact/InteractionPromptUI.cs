@@ -22,10 +22,8 @@ public class InteractionPromptUI : MonoBehaviour
         if (cameraTransform == null && Camera.main != null)
         {
             cameraTransform = Camera.main.transform;
+            if (cameraTransform == null) return;
         }
-
-        if (cameraTransform == null)
-            return;
 
         Vector3 direction = transform.position - cameraTransform.position;
         transform.rotation = Quaternion.LookRotation(direction);

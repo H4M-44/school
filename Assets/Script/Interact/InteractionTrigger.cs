@@ -3,7 +3,8 @@ using UnityEngine;
 [RequireComponent(typeof(Collider))]
 public class InteractionTrigger : MonoBehaviour
 {
-    [SerializeField] private string promptText = "E";
+    // [SerializeField] private string promptText = "E";
+    private string promptText = "";
 
     private void Reset()
     {
