@@ -1,19 +1,17 @@
 using UnityEngine;
-using WorldTime;
 
 public class TimeAdvanceButton : MonoBehaviour
 {
-    [SerializeField] private WorldTime.WorldTime worldTime; // drag your timesys reference here
-    [SerializeField] private int advanceMinutes = 15;       // set per button in Inspector
+    [SerializeField] private DailyTimeController dailyTimeController;
 
     public void OnClickAdvance()
     {
-        if (worldTime == null)
+        if (dailyTimeController == null)
         {
-            Debug.LogError("WorldTime reference is missing on TimeAdvanceButton.");
+            Debug.LogError("[TimeAdvanceButton] DailyTimeController is not assigned.");
             return;
         }
 
-        worldTime.AdvanceMinutes(advanceMinutes);
+        dailyTimeController.NextTime();
     }
 }

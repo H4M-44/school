@@ -1,55 +1,105 @@
-using System;
-using TMPro;
 using UnityEngine;
+using TMPro;
+using System;
 
-namespace WorldTime
+public class WorldTimeDisplay : MonoBehaviour
 {
-    [RequireComponent(typeof(TMP_Text))]
-    public class WorldTimeDisplay : MonoBehaviour
+    [SerializeField] private TMP_Text dayText;
+    [SerializeField] private TMP_Text timeText;
+
+    private WorldTime _worldTime;
+    private GameStateManager _gameState;
+    private bool _isBound;
+
+    private void OnEnable()
     {
-        [SerializeField] private WorldTime _worldTime;
+        TryBind();
+        RefreshAll();
+    }
 
-        private TMP_Text _text;
-
-        private void Awake()
+    private void Start()
+    {
+        if (!_isBound)
         {
-            _text = GetComponent<TMP_Text>();
+            TryBind();
+            RefreshAll();
+        }
+    }
 
-            if (_worldTime == null)
-            {
-                Debug.LogError("WorldTimeDisplay: _worldTime is not assigned.", this);
-                enabled = false;
-                return;
-            }
+    private void OnDisable()
+    {
+        Unbind();
+    }
 
-            _worldTime.WorldTimeChanged += OnWorldTimeChanged;
-            _worldTime.WorldDayChanged += OnWorldDayChanged; // NEW
+    public void TryBind()
+    {
+        Unbind();
 
-            RefreshText();
+        _worldTime = WorldTime.Instance;
+        _gameState = GameStateManager.Instance;
+
+        Debug.Log($"[WorldTimeDisplay] Bind result - WorldTime: {_worldTime != null}, GameState: {_gameState != null}");
+
+        if (_worldTime != null)
+        {
+            _worldTime.TimeChanged += HandleTimeChanged;
+            _worldTime.DayChanged += HandleDayChanged;
         }
 
-        private void OnDestroy()
+        if (_gameState != null)
         {
-            if (_worldTime == null) return;
-
-            _worldTime.WorldTimeChanged -= OnWorldTimeChanged;
-            _worldTime.WorldDayChanged -= OnWorldDayChanged; // NEW
+            _gameState.DayChanged += HandleDayChanged;
         }
 
-        private void OnWorldTimeChanged(object sender, TimeSpan newTime)
+        _isBound = (_worldTime != null && _gameState != null);
+    }
+
+    private void Unbind()
+    {
+        if (_worldTime != null)
         {
-            RefreshText();
+            _worldTime.TimeChanged -= HandleTimeChanged;
+            _worldTime.DayChanged -= HandleDayChanged;
         }
 
-        private void OnWorldDayChanged(int newDay)
+        if (_gameState != null)
         {
-            RefreshText();
+            _gameState.DayChanged -= HandleDayChanged;
         }
 
-        private void RefreshText()
-        {
-            // Example: "Day 3  06:15"
-            _text.SetText($"Day {_worldTime.CurrentDay}  {_worldTime.CurrentTime:hh\\:mm}");
-        }
+        _worldTime = null;
+        _gameState = null;
+        _isBound = false;
+    }
+
+    private void HandleTimeChanged(TimeSpan newTime)
+    {
+        RefreshTime(newTime);
+    }
+
+    private void HandleDayChanged(int newDay)
+    {
+        RefreshDay(newDay);
+    }
+
+    private void RefreshAll()
+    {
+        if (GameStateManager.Instance != null)
+            RefreshDay(GameStateManager.Instance.CurrentDay);
+
+        if (WorldTime.Instance != null)
+            RefreshTime(WorldTime.Instance.CurrentTime);
+    }
+
+    private void RefreshDay(int day)
+    {
+        if (dayText != null)
+            dayText.text = $"Day {day}";
+    }
+
+    private void RefreshTime(TimeSpan time)
+    {
+        if (timeText != null)
+            timeText.text = time.ToString(@"hh\:mm");
     }
 }

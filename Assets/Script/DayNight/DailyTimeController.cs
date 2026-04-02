@@ -1,36 +1,39 @@
-using WorldTime;
 using UnityEngine;
+using System;
 
 public class DailyTimeController : MonoBehaviour
 {
-    [SerializeField] private WorldTime.WorldTime worldTime;
+    [Header("Scene References")]
     [SerializeField] private NpcDirector npcDirector;
     [SerializeField] private DialogueUIController dialogueUIController;
 
-    [SerializeField] private int currentDay = 1;
-    [SerializeField] private int currentBlockIndex = -1;
-
     private bool isWaitingForDialogueFinish = false;
+
+    private GameStateManager GameState => GameStateManager.Instance;
+    private WorldTime TimeService => WorldTime.Instance;
 
     private void Awake()
     {
-        if (npcDirector == null)
-            npcDirector = FindFirstObjectByType<NpcDirector>();
+    if (npcDirector == null)
+        npcDirector = FindFirstObjectByType<NpcDirector>();
 
-        if (worldTime == null)
-            worldTime = FindFirstObjectByType<WorldTime.WorldTime>();
+    if (dialogueUIController == null)
+        dialogueUIController = FindFirstObjectByType<DialogueUIController>();
 
-        if (dialogueUIController == null)
-            dialogueUIController = FindFirstObjectByType<DialogueUIController>();
+    if (npcDirector == null)
+        Debug.LogError("[DailyTimeController] NpcDirector not found in scene.");
 
-        if (npcDirector == null)
-            Debug.LogError("NpcDirector not found in scene! Make sure it exists and is enabled.");
+    if (dialogueUIController == null)
+        Debug.LogError("[DailyTimeController] DialogueUIController not found in scene.");
+    }
 
-        if (worldTime == null)
-            Debug.LogError("WorldTime not found in scene! Make sure it exists and is enabled.");
+    private void Start()
+    {
+        if (GameState == null)
+            Debug.LogError("[DailyTimeController] GameStateManager.Instance is missing. Make sure GameBootstrap exists in the startup scene.");
 
-        if (dialogueUIController == null)
-            Debug.LogError("DialogueUIController not found in scene! Make sure it exists and is enabled.");
+        if (TimeService == null)
+            Debug.LogError("[DailyTimeController] WorldTime.Instance is missing. Make sure GameBootstrap exists in the startup scene.");
     }
 
     private void OnEnable()
@@ -49,55 +52,82 @@ public class DailyTimeController : MonoBehaviour
     {
         if (isWaitingForDialogueFinish)
         {
-            Debug.Log("Dialogue is playing. NextTime is blocked.");
+            Debug.Log("[DailyTimeController] Dialogue is playing. NextTime is blocked.");
             return;
         }
+
+        if (GameState == null)
+        {
+            Debug.LogError("[DailyTimeController] Cannot advance time because GameStateManager is missing.");
+            return;
+        }
+
+        int currentDay = GameState.CurrentDay;
+        int currentBlockIndex = GameState.CurrentBlockIndex;
 
         var day = ConfigQuery.GetScheduleDay(currentDay);
         if (day == null || day.blocks == null || day.blocks.Count == 0)
         {
-            Debug.LogError($"No schedule for day {currentDay}");
+            Debug.LogError($"[DailyTimeController] No schedule for day {currentDay}.");
             return;
         }
 
-        currentBlockIndex++;
+        int nextBlockIndex = currentBlockIndex + 1;
+        int nextDay = currentDay;
 
-        if (currentBlockIndex >= day.blocks.Count)
+        if (nextBlockIndex >= day.blocks.Count)
         {
-            currentDay++;
-            currentBlockIndex = 0;
+            nextDay++;
+            nextBlockIndex = 0;
 
-            day = ConfigQuery.GetScheduleDay(currentDay);
+            day = ConfigQuery.GetScheduleDay(nextDay);
             if (day == null || day.blocks == null || day.blocks.Count == 0)
             {
-                Debug.LogWarning($"No schedule for day {currentDay}. End.");
+                Debug.LogWarning($"[DailyTimeController] No schedule for day {nextDay}. End.");
                 return;
             }
         }
 
-        ApplyBlock(day.blocks[currentBlockIndex]);
+        GameState.SetDayAndBlock(nextDay, nextBlockIndex);
+
+        ApplyBlock(day.blocks[nextBlockIndex], nextDay);
     }
 
-    private void ApplyBlock(TimeBlock block)
+    private void ApplyBlock(TimeBlock block, int day)
     {
-        Debug.Log($"[Day {currentDay}] Enter {block.time} ({block.name}) npcLoc={block.npcLocationId} startDia={block.startDialogueId} endDia={block.endDialogueId}");
+        Debug.Log($"[Day {day}] Enter {block.time} ({block.name}) npcLoc={block.npcLocationId} startDia={block.startDialogueId} endDia={block.endDialogueId}");
 
-        // 1) 时钟跳转
-        if (worldTime != null)
-            worldTime.SetTimeHHmm(currentDay, block.time);
+        // 1) Set world time from block.time
+        if (TimeService != null)
+        {
+            if (TryParseBlockTime(block.time, out int hour, out int minute))
+            {
+                TimeService.SetTime(hour, minute);
+            }
+            else
+            {
+                Debug.LogError($"[DailyTimeController] Failed to parse block time: {block.time}");
+            }
+        }
         else
-            Debug.LogError("WorldTime reference not assigned!");
+        {
+            Debug.LogError("[DailyTimeController] WorldTime.Instance is missing.");
+        }
 
-        // 2) NPC 跳转
+        // 2) Move NPCs
         if (block.npcLocationId != 0)
         {
             if (npcDirector != null)
+            {
                 npcDirector.ApplyNpcLocation(block.npcLocationId);
+            }
             else
-                Debug.LogError("NpcDirector reference not assigned!");
+            {
+                Debug.LogError("[DailyTimeController] NpcDirector reference not assigned.");
+            }
         }
 
-        // 3) 自动剧情
+        // 3) Auto dialogue
         bool hasDialogue = block.startDialogueId > 0 && block.endDialogueId > 0;
 
         if (hasDialogue)
@@ -109,7 +139,8 @@ public class DailyTimeController : MonoBehaviour
             }
             else
             {
-                Debug.LogError("DialogueUIController reference not assigned!");
+                Debug.LogError("[DailyTimeController] DialogueUIController reference not assigned.");
+                isWaitingForDialogueFinish = false;
             }
         }
         else
@@ -120,9 +151,36 @@ public class DailyTimeController : MonoBehaviour
 
     private void HandleDialogueFinished()
     {
-        Debug.Log("Dialogue finished. Auto advancing to next block.");
+        Debug.Log("[DailyTimeController] Dialogue finished. Auto advancing to next block.");
 
         isWaitingForDialogueFinish = false;
         NextTime();
+    }
+
+    private bool TryParseBlockTime(string timeText, out int hour, out int minute)
+    {
+        hour = 0;
+        minute = 0;
+
+        if (string.IsNullOrWhiteSpace(timeText))
+            return false;
+
+        string[] parts = timeText.Split(':');
+        if (parts.Length != 2)
+            return false;
+
+        if (!int.TryParse(parts[0], out hour))
+            return false;
+
+        if (!int.TryParse(parts[1], out minute))
+            return false;
+
+        if (hour < 0 || hour > 23)
+            return false;
+
+        if (minute < 0 || minute > 59)
+            return false;
+
+        return true;
     }
 }
