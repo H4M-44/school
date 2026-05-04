@@ -4,6 +4,13 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
+public enum DialogueSource
+{
+    Unknown,
+    Schedule,
+    Interaction
+}
+
 public class DialogueUIController : MonoBehaviour
 {
     [Header("UI References")]
@@ -19,21 +26,32 @@ public class DialogueUIController : MonoBehaviour
     private readonly List<DialogueLine> currentLines = new();
     private int currentIndex = 0;
     private bool isPlaying = false;
+    private DialogueSource currentSource = DialogueSource.Unknown;
 
     public Action OnDialogueFinished;
+    public Action<DialogueSource> OnDialogueFinishedWithSource;
 
     public bool IsPlaying => isPlaying;
 
+    private void Awake()
+    {
+        AutoBindMissingReferences();
+    }
+
     private void Start()
     {
-        nextButton.onClick.AddListener(OnNextClicked);
-        backButton.onClick.AddListener(OnBackClicked);
+        if (nextButton != null)
+            nextButton.onClick.AddListener(OnNextClicked);
+
+        if (backButton != null)
+            backButton.onClick.AddListener(OnBackClicked);
+
         HideDialogue();
 
         //test StartDialogueByIdRange(900001, 900003);
     }
 
-    public void StartDialogue(List<DialogueLine> lines)
+    public void StartDialogue(List<DialogueLine> lines, DialogueSource source = DialogueSource.Unknown)
     {
         if (lines == null || lines.Count == 0)
         {
@@ -46,12 +64,13 @@ public class DialogueUIController : MonoBehaviour
 
         currentIndex = 0;
         isPlaying = true;
+        currentSource = source;
 
         dialoguePanel.SetActive(true);
         ShowCurrentLine();
     }
 
-    public void StartDialogueByIdRange(int startId, int endId)
+    public void StartDialogueByIdRange(int startId, int endId, DialogueSource source = DialogueSource.Unknown)
     {
         if (dialogueDatabase == null)
         {
@@ -89,7 +108,7 @@ public class DialogueUIController : MonoBehaviour
             return;
         }
 
-        StartDialogue(result);
+        StartDialogue(result, source);
     }
 
     private void ShowCurrentLine()
@@ -135,16 +154,47 @@ public class DialogueUIController : MonoBehaviour
 
     private void FinishDialogue()
     {
+        DialogueSource finishedSource = currentSource;
         isPlaying = false;
         currentLines.Clear();
         currentIndex = 0;
+        currentSource = DialogueSource.Unknown;
 
         HideDialogue();
+        OnDialogueFinishedWithSource?.Invoke(finishedSource);
         OnDialogueFinished?.Invoke();
     }
 
     public void HideDialogue()
     {
-        dialoguePanel.SetActive(false);
+        if (dialoguePanel != null)
+            dialoguePanel.SetActive(false);
+    }
+
+    private void AutoBindMissingReferences()
+    {
+        if (dialoguePanel == null)
+            dialoguePanel = gameObject;
+
+        TMP_Text[] texts = GetComponentsInChildren<TMP_Text>(true);
+        foreach (TMP_Text text in texts)
+        {
+            if (speakerText == null && text.name == "SpeakerText")
+                speakerText = text;
+            else if (contentText == null && text.name == "ContentText")
+                contentText = text;
+        }
+
+        Button[] buttons = GetComponentsInChildren<Button>(true);
+        foreach (Button button in buttons)
+        {
+            if (nextButton == null && button.name == "NextButton")
+                nextButton = button;
+            else if (backButton == null && button.name == "BackButton")
+                backButton = button;
+        }
+
+        if (dialogueDatabase == null && ConfigService.I != null)
+            dialogueDatabase = ConfigService.I.Dialogue;
     }
 }

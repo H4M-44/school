@@ -6,6 +6,7 @@ public class NpcDirector : MonoBehaviour
     [SerializeField] private NpcAnchorRegistry anchors;
 
     private readonly Dictionary<string, NpcActor> _npcById = new();
+    private readonly Dictionary<string, NpcActor> _npcByAnchor = new();
 
     private void Awake()
     {
@@ -50,6 +51,7 @@ public class NpcDirector : MonoBehaviour
     public void ApplyNpcLocation(int npcLocationId)
     {
         Debug.Log($"[NpcDirector] ApplyNpcLocation id={npcLocationId}");
+        _npcByAnchor.Clear();
 
         var set = ConfigQuery.GetNpcLocationSet(npcLocationId);
         if (set == null)
@@ -85,6 +87,27 @@ public class NpcDirector : MonoBehaviour
             }
 
             npc.transform.SetPositionAndRotation(anchor.position, anchor.rotation);
+            Debug.Log($"[NpcDirector] Move {p.npcId} to anchor {p.anchorId} at {anchor.position}", npc);
+            npc.SetActiveEvent(p.eventId);
+
+            var anchorKey = p.anchorId.Trim();
+            if (!_npcByAnchor.ContainsKey(anchorKey))
+                _npcByAnchor.Add(anchorKey, npc);
         }
+    }
+
+    public void ApplyEventToNpc(string npcIdOrAnchorId, int eventId)
+    {
+        var npc = FindNpcById(npcIdOrAnchorId);
+        if (npc == null && !string.IsNullOrWhiteSpace(npcIdOrAnchorId))
+            _npcByAnchor.TryGetValue(npcIdOrAnchorId.Trim(), out npc);
+
+        if (npc == null)
+        {
+            Debug.LogWarning($"NPC not found in scene: {npcIdOrAnchorId}");
+            return;
+        }
+
+        npc.SetActiveEvent(eventId);
     }
 }

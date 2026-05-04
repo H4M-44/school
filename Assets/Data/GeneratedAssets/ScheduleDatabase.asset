@@ -10,7 +10,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: aae806dc2b13f584fa44243104e55c21, type: 3}
-  m_Name: 
+  m_Name: ScheduleDatabase
   m_EditorClassIdentifier: 
   days:
   - id: 1001
@@ -19,16 +19,19 @@ MonoBehaviour:
     - time: 10:00
       name: "\u65E9\u4E0A"
       npcLocationId: 20001
-      startDialogueId: 900001
-      endDialogueId: 900003
+      eventId: 50001
+      startDialogueId: 0
+      endDialogueId: 0
     - time: 15:15
       name: "\u65E9\u4E0A"
       npcLocationId: 20001
+      eventId: 0
       startDialogueId: 900001
       endDialogueId: 900003
     - time: 20:15
       name: "\u65E9\u4E0A"
       npcLocationId: 20001
+      eventId: 0
       startDialogueId: 900001
       endDialogueId: 900003
   - id: 1002
@@ -36,16 +39,19 @@ MonoBehaviour:
     blocks:
     - time: 10:00
       name: "\u65E9\u4E0A"
-      npcLocationId: 20002
+      npcLocationId: 20001
+      eventId: 50001
       startDialogueId: 0
       endDialogueId: 0
     - time: 16:15
       name: "\u65E9\u4E0A"
-      npcLocationId: 20002
+      npcLocationId: 20001
+      eventId: 50001
       startDialogueId: 0
       endDialogueId: 0
     - time: 21:15
       name: "\u65E9\u4E0A"
-      npcLocationId: 20002
+      npcLocationId: 20001
+      eventId: 50001
       startDialogueId: 0
       endDialogueId: 0

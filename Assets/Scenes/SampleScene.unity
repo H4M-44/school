@@ -1084,13 +1084,17 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 1143662207}
     m_Modifications:
+    - target: {fileID: 1435569247717526243, guid: 304d60f556c308142b49d289daeef1cc, type: 3}
+      propertyPath: m_IsTrigger
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 5172086527407885377, guid: 304d60f556c308142b49d289daeef1cc, type: 3}
       propertyPath: m_LocalPosition.x
-      value: 0
+      value: 6.31
       objectReference: {fileID: 0}
     - target: {fileID: 5172086527407885377, guid: 304d60f556c308142b49d289daeef1cc, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 0
+      value: 4.24
       objectReference: {fileID: 0}
     - target: {fileID: 5172086527407885377, guid: 304d60f556c308142b49d289daeef1cc, type: 3}
       propertyPath: m_LocalPosition.z
@@ -2186,6 +2190,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   npcId: NPC_01
+  interactionRadius: 2
 --- !u!4 &443790194 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 5172086527407885377, guid: 304d60f556c308142b49d289daeef1cc, type: 3}
@@ -3769,7 +3774,7 @@ Transform:
   m_GameObject: {fileID: 687105055}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 37.1, y: -5.14, z: -12.7}
+  m_LocalPosition: {x: 9.8, y: 2.87, z: -1.03}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -4700,6 +4705,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2fa6700efc798a246831b8b8ab86fe14, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  promptText: 
 --- !u!114 &953753967
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -5067,6 +5073,7 @@ MonoBehaviour:
   schedule: {fileID: 11400000, guid: 133746b464873dd419e626d0aff9f179, type: 2}
   npcLocation: {fileID: 11400000, guid: ce55c055e5d860c4989a9ae0c7948351, type: 2}
   dialogue: {fileID: 11400000, guid: 541e317b41156eb4098c2dd2610b541f, type: 2}
+  events: {fileID: 11400000, guid: 701f6c793fa843d4ebd19d2e4262db06, type: 2}
 --- !u!4 &1067697399
 Transform:
   m_ObjectHideFlags: 0
@@ -5562,6 +5569,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   npcId: NPC_03
+  interactionRadius: 2
 --- !u!4 &1310231869 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 803224108067845623, guid: 0837fb8b7a49da84cb35de95f06f3821, type: 3}
@@ -5912,6 +5920,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   npcId: NPC_02
+  interactionRadius: 2
 --- !u!4 &1478962513 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 2754182189498508911, guid: cc70c7669ee32594ab1e1c6e03a710ce, type: 3}

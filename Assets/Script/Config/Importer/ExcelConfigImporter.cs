@@ -19,6 +19,7 @@ public static class DailySystemExcelImporter
     private static readonly string[] ScheduleSheetNames = { "日程系统", "日程", "Schedule", "ScheduleSystem" };
     private static readonly string[] NpcLocationSheetNames = { "NPC位置", "Npc位置", "NPC", "NpcLocation", "NpcLocationSystem" };
     private static readonly string[] DialogueSheetNames = { "剧情", "对话", "剧情系统", "Dialogue", "Dialog" };
+    private static readonly string[] EventSheetNames = { "事件", "事件系统", "Event", "Events", "EventSystem" };
 
     [MenuItem("Tools/Config/Import Daily System (XLSX Robust)")]
     public static void ImportAll()
@@ -42,10 +43,12 @@ public static class DailySystemExcelImporter
         var scheduleTable = FindSheet(ds, ScheduleSheetNames);
         var npcTable = FindSheet(ds, NpcLocationSheetNames);
         var dialogueTable = FindSheet(ds, DialogueSheetNames);
+        var eventTable = FindSheet(ds, EventSheetNames);
 
         if (scheduleTable == null) Debug.LogError($"Cannot find schedule sheet. Existing: {ListSheets(ds)}");
         if (npcTable == null) Debug.LogError($"Cannot find npc-location sheet. Existing: {ListSheets(ds)}");
         if (dialogueTable == null) Debug.LogError($"Cannot find dialogue sheet. Existing: {ListSheets(ds)}");
+        if (eventTable == null) Debug.LogWarning($"Cannot find event sheet. Existing: {ListSheets(ds)}");
 
         // 找不到就别硬跑，避免空引用/生成空资产误导你
         if (scheduleTable == null || npcTable == null || dialogueTable == null) return;
@@ -60,10 +63,13 @@ public static class DailySystemExcelImporter
         var dialogueDb = ParseDialogue(dialogueTable);
         SaveOrOverwrite(dialogueDb, "DialogueDatabase.asset");
 
+        var eventDb = ParseEvents(eventTable);
+        SaveOrOverwrite(eventDb, "EventDatabase.asset");
+
         AssetDatabase.SaveAssets();
         AssetDatabase.Refresh();
 
-        Debug.Log($"Import done. ScheduleDays={scheduleDb.days.Count}, NpcSets={npcDb.sets.Count}, DialogueLines={dialogueDb.lines.Count}");
+        Debug.Log($"Import done. ScheduleDays={scheduleDb.days.Count}, NpcSets={npcDb.sets.Count}, DialogueLines={dialogueDb.lines.Count}, Events={eventDb.events.Count}");
     }
 
     // =========================
@@ -141,13 +147,32 @@ public static class DailySystemExcelImporter
                     FindColContains(headerMap, "结束剧情") ??
                     -1;
 
+                int colEvent =
+                    FindColContains(headerMap, $"事件ID{key}") ??
+                    FindColContains(headerMap, "事件ID") ??
+                    FindColContains(headerMap, "EventID") ??
+                    FindColContains(headerMap, "Event") ??
+                    -1;
+
+                int eventId = colEvent >= 0 ? ToInt(row, colEvent) : 0;
+                int startDialogueId = colStart >= 0 ? ToInt(row, colStart) : 0;
+                int endDialogueId = colEnd >= 0 ? ToInt(row, colEnd) : 0;
+
+                if (eventId > 0 && (startDialogueId > 0 || endDialogueId > 0))
+                {
+                    Debug.LogWarning($"Schedule row {r + 1}, block {key}: eventId and dialogueId are both set. Dialogue ids will be ignored.");
+                    startDialogueId = 0;
+                    endDialogueId = 0;
+                }
+
                 var block = new TimeBlock
                 {
                     time = time,
                     name = colName >= 0 ? ToCellString(row, colName) : "",
                     npcLocationId = colNpc >= 0 ? ToInt(row, colNpc) : 0,
-                    startDialogueId = colStart >= 0 ? ToInt(row, colStart) : 0,
-                    endDialogueId = colEnd >= 0 ? ToInt(row, colEnd) : 0,
+                    eventId = eventId,
+                    startDialogueId = startDialogueId,
+                    endDialogueId = endDialogueId,
                 };
 
                 day.blocks.Add(block);
@@ -286,6 +311,102 @@ public static class DailySystemExcelImporter
     }
 
     // =========================
+    // Parse: Events
+    // =========================
+    private static EventDatabase ParseEvents(DataTable t)
+    {
+        var db = ScriptableObject.CreateInstance<EventDatabase>();
+        if (t == null) return db;
+
+        int headerRow = DetectHeaderRow(t, requiredKeywords: new[] { "ID" });
+        if (headerRow < 0)
+        {
+            Debug.LogError("Events: cannot detect header row.");
+            return db;
+        }
+
+        var headerMap = BuildHeaderMap(t, headerRow);
+
+        int colId =
+            FindCol(headerMap, "ID") >= 0 ? FindCol(headerMap, "ID") :
+            FindColContains(headerMap, "事件ID") ??
+            FindColContains(headerMap, "EventID") ??
+            FindColContains(headerMap, "ID") ??
+            -1;
+        int colType =
+            FindColContains(headerMap, "事件类型") ??
+            FindColContains(headerMap, "类型") ??
+            FindColContains(headerMap, "Type") ??
+            -1;
+        int colNpc =
+            FindColContains(headerMap, "NPCID") ??
+            FindColContains(headerMap, "NPC") ??
+            -1;
+        int colStart =
+            FindColContains(headerMap, "起始剧情ID") ??
+            FindColContains(headerMap, "开始剧情ID") ??
+            FindColContains(headerMap, "StartDialogueID") ??
+            -1;
+        int colEnd =
+            FindColContains(headerMap, "结束剧情ID") ??
+            FindColContains(headerMap, "EndDialogueID") ??
+            -1;
+        int colPrompt =
+            FindColContains(headerMap, "提示") ??
+            FindColContains(headerMap, "Prompt") ??
+            -1;
+        int colRepeat =
+            FindColContains(headerMap, "可重复") ??
+            FindColContains(headerMap, "Repeat") ??
+            -1;
+
+        if (colId < 0)
+        {
+            Debug.LogError($"Events: missing ID column. Headers={string.Join(", ", headerMap.Keys)}");
+            return db;
+        }
+
+        for (int r = headerRow + 1; r < t.Rows.Count; r++)
+        {
+            var row = t.Rows[r];
+            if (IsRowEmpty(row)) continue;
+
+            int id = ToInt(row, colId);
+            if (id == 0) continue;
+
+            db.events.Add(new GameEventDefinition
+            {
+                id = id,
+                type = NormalizeEventType(colType >= 0 ? ToCellString(row, colType) : ""),
+                npcId = colNpc >= 0 ? ToCellString(row, colNpc) : "",
+                startDialogueId = colStart >= 0 ? ToInt(row, colStart) : 0,
+                endDialogueId = colEnd >= 0 ? ToInt(row, colEnd) : 0,
+                promptText = colPrompt >= 0 ? ToCellString(row, colPrompt) : "E",
+                repeatable = colRepeat >= 0 && ToBool(row, colRepeat)
+            });
+        }
+
+        return db;
+    }
+
+    private static string NormalizeEventType(string raw)
+    {
+        if (string.IsNullOrWhiteSpace(raw))
+            return "chat";
+
+        string value = raw.Trim();
+        string lower = value.ToLowerInvariant();
+
+        if (value.Contains(":"))
+            return "chat";
+
+        if (lower == "chat" || value == "聊天")
+            return "chat";
+
+        return value;
+    }
+
+    // =========================
     // Excel & Asset Helpers
     // =========================
     private static DataTable FindSheet(DataSet ds, string[] candidates)
@@ -320,11 +441,14 @@ public static class DailySystemExcelImporter
     private static void SaveOrOverwrite(UnityEngine.Object asset, string fileName)
     {
         var path = Path.Combine(OutputFolder, fileName).Replace("\\", "/");
+        asset.name = Path.GetFileNameWithoutExtension(fileName);
+
         var existing = AssetDatabase.LoadAssetAtPath<UnityEngine.Object>(path);
 
         if (existing != null)
         {
             EditorUtility.CopySerialized(asset, existing);
+            existing.name = asset.name;
             UnityEngine.Object.DestroyImmediate(asset);
             EditorUtility.SetDirty(existing);
         }
@@ -450,6 +574,12 @@ public static class DailySystemExcelImporter
         if (double.TryParse(s, NumberStyles.Any, CultureInfo.InvariantCulture, out var vd)) return (int)vd;
 
         return 0;
+    }
+
+    private static bool ToBool(DataRow row, int col)
+    {
+        string s = ToCellString(row, col).Trim().ToLowerInvariant();
+        return s == "1" || s == "true" || s == "yes" || s == "y" || s == "是";
     }
 
     private static string CellRawToString(object v)

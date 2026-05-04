@@ -14,17 +14,17 @@ public class DailyTimeController : MonoBehaviour
 
     private void Awake()
     {
-    if (npcDirector == null)
-        npcDirector = FindFirstObjectByType<NpcDirector>();
+        if (npcDirector == null)
+            npcDirector = FindFirstObjectByType<NpcDirector>();
 
-    if (dialogueUIController == null)
-        dialogueUIController = FindFirstObjectByType<DialogueUIController>();
+        if (dialogueUIController == null)
+            dialogueUIController = FindFirstObjectByType<DialogueUIController>();
 
-    if (npcDirector == null)
-        Debug.LogError("[DailyTimeController] NpcDirector not found in scene.");
+        if (npcDirector == null)
+            Debug.LogError("[DailyTimeController] NpcDirector not found in scene.");
 
-    if (dialogueUIController == null)
-        Debug.LogError("[DailyTimeController] DialogueUIController not found in scene.");
+        if (dialogueUIController == null)
+            Debug.LogError("[DailyTimeController] DialogueUIController not found in scene.");
     }
 
     private void Start()
@@ -39,13 +39,13 @@ public class DailyTimeController : MonoBehaviour
     private void OnEnable()
     {
         if (dialogueUIController != null)
-            dialogueUIController.OnDialogueFinished += HandleDialogueFinished;
+            dialogueUIController.OnDialogueFinishedWithSource += HandleDialogueFinished;
     }
 
     private void OnDisable()
     {
         if (dialogueUIController != null)
-            dialogueUIController.OnDialogueFinished -= HandleDialogueFinished;
+            dialogueUIController.OnDialogueFinishedWithSource -= HandleDialogueFinished;
     }
 
     public void NextTime()
@@ -95,7 +95,9 @@ public class DailyTimeController : MonoBehaviour
 
     private void ApplyBlock(TimeBlock block, int day)
     {
-        Debug.Log($"[Day {day}] Enter {block.time} ({block.name}) npcLoc={block.npcLocationId} startDia={block.startDialogueId} endDia={block.endDialogueId}");
+        EnsureSceneReferences();
+
+        Debug.Log($"[Day {day}] Enter {block.time} ({block.name}) npcLoc={block.npcLocationId} event={block.eventId} startDia={block.startDialogueId} endDia={block.endDialogueId}");
 
         // 1) Set world time from block.time
         if (TimeService != null)
@@ -127,15 +129,21 @@ public class DailyTimeController : MonoBehaviour
             }
         }
 
-        // 3) Auto dialogue
+        // 3) Event or auto dialogue
+        bool hasEvent = block.eventId > 0;
         bool hasDialogue = block.startDialogueId > 0 && block.endDialogueId > 0;
 
-        if (hasDialogue)
+        if (hasEvent)
+        {
+            ApplyBlockEvent(block.eventId);
+            isWaitingForDialogueFinish = false;
+        }
+        else if (hasDialogue)
         {
             if (dialogueUIController != null)
             {
                 isWaitingForDialogueFinish = true;
-                dialogueUIController.StartDialogueByIdRange(block.startDialogueId, block.endDialogueId);
+                dialogueUIController.StartDialogueByIdRange(block.startDialogueId, block.endDialogueId, DialogueSource.Schedule);
             }
             else
             {
@@ -149,8 +157,17 @@ public class DailyTimeController : MonoBehaviour
         }
     }
 
-    private void HandleDialogueFinished()
+    private void HandleDialogueFinished(DialogueSource source)
     {
+        if (source != DialogueSource.Schedule)
+        {
+            isWaitingForDialogueFinish = false;
+            return;
+        }
+
+        if (!isWaitingForDialogueFinish)
+            return;
+
         Debug.Log("[DailyTimeController] Dialogue finished. Auto advancing to next block.");
 
         isWaitingForDialogueFinish = false;
@@ -182,5 +199,43 @@ public class DailyTimeController : MonoBehaviour
             return false;
 
         return true;
+    }
+
+    private void EnsureSceneReferences()
+    {
+        if (npcDirector == null)
+            npcDirector = FindFirstObjectByType<NpcDirector>();
+
+        if (dialogueUIController == null)
+        {
+            dialogueUIController = FindFirstObjectByType<DialogueUIController>();
+
+            if (dialogueUIController != null)
+                dialogueUIController.OnDialogueFinishedWithSource += HandleDialogueFinished;
+        }
+    }
+
+    private void ApplyBlockEvent(int eventId)
+    {
+        GameEventDefinition eventDefinition = ConfigQuery.GetEvent(eventId);
+        if (eventDefinition == null)
+        {
+            Debug.LogWarning($"[DailyTimeController] Event not found: {eventId}");
+            return;
+        }
+
+        if (npcDirector == null)
+        {
+            Debug.LogWarning("[DailyTimeController] NpcDirector is missing; event cannot be assigned to NPC.");
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(eventDefinition.npcId))
+        {
+            Debug.LogWarning($"[DailyTimeController] Event {eventId} has no npcId.");
+            return;
+        }
+
+        npcDirector.ApplyEventToNpc(eventDefinition.npcId, eventId);
     }
 }

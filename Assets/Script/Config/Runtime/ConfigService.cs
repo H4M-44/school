@@ -8,10 +8,12 @@ public class ConfigService : MonoBehaviour
     [SerializeField] private ScheduleDatabase schedule;
     [SerializeField] private NpcLocationDatabase npcLocation;
     [SerializeField] private DialogueDatabase dialogue;
+    [SerializeField] private EventDatabase events;
 
     public ScheduleDatabase Schedule => schedule;
     public NpcLocationDatabase NpcLocation => npcLocation;
     public DialogueDatabase Dialogue => dialogue;
+    public EventDatabase Events => events;
 
     private void Awake()
     
@@ -23,6 +25,7 @@ public class ConfigService : MonoBehaviour
         Debug.Assert(schedule != null, "ScheduleDatabase is not assigned!");
         Debug.Assert(npcLocation != null, "NpcLocationDatabase is not assigned!");
         Debug.Assert(dialogue != null, "DialogueDatabase is not assigned!");
+        Debug.Assert(events != null, "EventDatabase is not assigned!");
         ConfigQuery.BuildCache();
 
 
