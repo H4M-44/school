@@ -111,6 +111,39 @@ public class DialogueUIController : MonoBehaviour
         StartDialogue(result, source);
     }
 
+    public void StartDialogueById(int dialogueId, DialogueSource source = DialogueSource.Unknown)
+    {
+        if (dialogueDatabase == null)
+        {
+            Debug.LogError("DialogueDatabase is not assigned.");
+            return;
+        }
+
+        if (dialogueId <= 0)
+        {
+            Debug.LogWarning($"Invalid dialogue id: {dialogueId}");
+            return;
+        }
+
+        List<DialogueLine> result = new();
+
+        foreach (var line in dialogueDatabase.lines)
+        {
+            if (line.dialogueId == dialogueId)
+            {
+                result.Add(line);
+            }
+        }
+
+        if (result.Count == 0)
+        {
+            Debug.LogWarning($"No dialogue lines found for dialogue id {dialogueId}");
+            return;
+        }
+
+        StartDialogue(result, source);
+    }
+
     private void ShowCurrentLine()
     {
         if (currentIndex < 0 || currentIndex >= currentLines.Count)
